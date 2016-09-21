@@ -17,20 +17,19 @@ type Model struct {
 	Buffer     *image.RGBA
 	Context    *gg.Context
 	Score      float64
-	Alpha      int
 	Size       int
 	Mode       Mode
 	Shapes     []Shape
+	Alphas     []int
 	Scores     []float64
 	SVGs       []string
 }
 
-func NewModel(target image.Image, background Color, alpha, size int, mode Mode) *Model {
+func NewModel(target image.Image, background Color, size int, mode Mode) *Model {
 	model := &Model{}
 	model.W = target.Bounds().Size().X
 	model.H = target.Bounds().Size().Y
 	model.Background = background
-	model.Alpha = alpha
 	model.Size = size
 	model.Mode = mode
 	model.Target = imageToRGBA(target)
@@ -71,7 +70,7 @@ func (model *Model) Frames(scoreDelta float64) []image.Image {
 	result = append(result, imageToRGBA(dc.Image()))
 	previous := 10.0
 	for i, shape := range model.Shapes {
-		c := model.computeColor(shape.Rasterize(), model.Alpha)
+		c := model.computeColor(shape.Rasterize(), model.Alphas[i])
 		dc.SetRGBA255(c.R, c.G, c.B, c.A)
 		shape.Draw(dc)
 		dc.Fill()
@@ -98,9 +97,9 @@ func (model *Model) SVG() string {
 	return strings.Join(lines, "\n")
 }
 
-func (model *Model) Add(shape Shape) {
+func (model *Model) Add(shape Shape, alpha int) {
 	lines := shape.Rasterize()
-	c := model.computeColor(lines, model.Alpha)
+	c := model.computeColor(lines, alpha)
 	s := model.computeScore(lines, c, model.Buffer)
 	Draw(model.Current, c, lines)
 
@@ -110,6 +109,7 @@ func (model *Model) Add(shape Shape) {
 
 	model.Score = s
 	model.Shapes = append(model.Shapes, shape)
+	model.Alphas = append(model.Alphas, alpha)
 	model.Scores = append(model.Scores, s)
 	model.SVGs = append(model.SVGs, svg)
 
@@ -123,7 +123,7 @@ func (model *Model) Step() {
 	// state := model.BestRandomState(model.Buffer, model.Mode, 1000)
 	// state = Anneal(state, 0.1, 0.00001, 25000).(*State)
 	state = HillClimb(state, 1000).(*State)
-	model.Add(state.Shape)
+	model.Add(state.Shape, state.Alpha)
 }
 
 func (model *Model) BestHillClimbState(buffer *image.RGBA, t Mode, n, age, m int) *State {
@@ -209,9 +209,9 @@ func (model *Model) computeScore(lines []Scanline, c Color, buffer *image.RGBA) 
 	return differencePartial(model.Target, model.Current, buffer, model.Score, lines)
 }
 
-func (model *Model) Energy(shape Shape, buffer *image.RGBA) float64 {
+func (model *Model) Energy(shape Shape, alpha int, buffer *image.RGBA) float64 {
 	lines := shape.Rasterize()
-	c := model.computeColor(lines, model.Alpha)
+	c := model.computeColor(lines, alpha)
 	s := model.computeScore(lines, c, buffer)
 	return s
 }

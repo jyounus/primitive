@@ -19,7 +19,6 @@ var (
 	Output     string
 	Background string
 	Number     int
-	Alpha      int
 	InputSize  int
 	OutputSize int
 	Mode       int
@@ -31,7 +30,6 @@ func init() {
 	flag.StringVar(&Output, "o", "", "output image path")
 	flag.StringVar(&Background, "bg", "", "background color (hex)")
 	flag.IntVar(&Number, "n", 0, "number of primitives")
-	flag.IntVar(&Alpha, "a", 128, "alpha value")
 	flag.IntVar(&InputSize, "r", 256, "resize large input images to this size")
 	flag.IntVar(&OutputSize, "s", 1024, "output image size")
 	flag.IntVar(&Mode, "m", 1, "0=combo 1=triangle 2=rect 3=ellipse 4=circle 5=rotatedrect")
@@ -102,7 +100,7 @@ func main() {
 	}
 
 	// run algorithm
-	model := primitive.NewModel(input, bg, Alpha, OutputSize, primitive.Mode(Mode))
+	model := primitive.NewModel(input, bg, OutputSize, primitive.Mode(Mode))
 	start := time.Now()
 	for i := 1; i <= Number; i++ {
 		// find optimal shape and add it to the model
