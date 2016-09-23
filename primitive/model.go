@@ -121,8 +121,8 @@ func (model *Model) Add(shape Shape) {
 }
 
 func (model *Model) Step() {
-	state := model.runWorkers(model.Mode, 100, 100, 16)
-	state = HillClimb(state, 500).(*State)
+	state := model.runWorkers(model.Mode, 100, 100, 8)
+	state = HillClimb(state, 1000).(*State)
 	model.Add(state.Shape)
 }
 
